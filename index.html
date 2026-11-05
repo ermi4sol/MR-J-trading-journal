@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trading Journal</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#f3f1ec;--card:#fffefb;--tx:#1b1a17;--mu:#78736a;--bd:#e3dfd6;--ac:#a97b14;--up:#13795b;--dn:#c0392b;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141a;--card:#1a1d25;--tx:#ece9e1;--mu:#8f8b80;--bd:#2a2e39;--ac:#e0b04a;--up:#3ecf9e;--dn:#ff7a6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141a;--card:#1a1d25;--tx:#ece9e1;--mu:#8f8b80;--bd:#2a2e39;--ac:#e0b04a;--up:#3ecf9e;--dn:#ff7a6b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+#app{max-width:480px;margin:0 auto;padding:12px 14px 88px}
+header{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+header select{flex:1;font-weight:600}
+h2{font-size:13px;margin:0 0 8px;color:var(--mu);font-weight:600}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.k{color:var(--mu);font-size:12px}.v{font-size:19px;font-weight:700}
+.big{font-size:30px;font-weight:700;letter-spacing:-.5px}
+.up{color:var(--up)}.dn{color:var(--dn)}
+select,input,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:9px 10px;min-width:0}
+textarea{width:100%;min-height:60px}
+button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color:#17130a;font-weight:700}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav div{display:flex;max-width:480px;margin:0 auto}
+nav button{flex:1;border:0;border-radius:0;background:none;color:var(--mu);font-size:11px;padding:10px 0}
+nav button.on{color:var(--ac);font-weight:700}
+nav button.add{color:var(--ac);font-size:22px;line-height:1;padding:6px 0;font-weight:400}
+.cal{display:grid;grid-template-columns:repeat(7,1fr) 1.25fr;gap:4px}
+.cal>.h{font-size:10px;color:var(--mu);text-align:center}
+.cd{min-height:46px;border-radius:8px;padding:3px 4px;font-size:10px;background:var(--bg);cursor:pointer;overflow:hidden}
+.cd b{font-size:11px;display:block;font-weight:600}
+.cd.w{background:color-mix(in srgb,var(--up) 24%,transparent)}.cd.l{background:color-mix(in srgb,var(--dn) 24%,transparent)}
+.cd.sel{outline:2px solid var(--ac)}.cd.wk{background:none;border:1px dashed var(--bd);cursor:default}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--bd)}
+.row:first-of-type{border-top:0}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--bd);color:var(--mu);margin:3px 4px 0 0}
+.bar{height:7px;border-radius:4px;background:var(--bg);overflow:hidden;margin-top:4px}.bar i{display:block;height:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chips button{padding:5px 11px;font-size:13px}.chips button.on{border-color:var(--ac);color:var(--ac);font-weight:700}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:8px}.f label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:3px}.f .w2{grid-column:1/3}
+.seg{display:flex}.seg button{flex:1;border-radius:0}.seg button:first-child{border-radius:9px 0 0 9px}.seg button:last-child{border-radius:0 9px 9px 0}.seg .on{background:var(--ac);color:#17130a;border-color:var(--ac);font-weight:700}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.dots{display:flex;gap:12px}.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ac)}.dots i.f1{background:var(--ac)}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:10px}.pad button{height:56px;font-size:20px}
+#toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+.note{font-size:12px;color:var(--mu)}
+
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8;overflow:auto;padding:16px;display:none}#modal .card{max-width:460px;margin:20px auto}
+#pinbox{display:none;flex-direction:column;align-items:center;gap:18px}#lock{overflow:auto}#lock form{width:92%;max-width:400px;display:none}
+</style></head><body>
+<div id="lock"><div id="pinbox"><div style="font-weight:700;font-size:18px">Enter your PIN</div><div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="pad" id="pad"></div><div class="note" id="pm"></div></div>
+<form id="setup" class="card f" onsubmit="return conn(event)"><h2 class="w2">Connect your journal</h2>
+<label class="w2">GitHub username<input id="so" required autocapitalize="off"></label><label class="w2">Private data repo name<input id="sr" required autocapitalize="off"></label>
+<label class="w2">Access token<input id="stk" type="password" required autocomplete="off"></label><label class="w2">Choose a 6-digit PIN<input id="sp" type="password" inputmode="numeric" maxlength="6" required></label>
+<button class="p w2">Connect</button><div class="note w2 dn" id="se"></div></form></div>
+<div id="app" hidden><header><select id="acc" onchange="cur=+this.value;draw()"></select><span id="st" class="note"></span><button onclick="go('set')" aria-label="Settings">⚙</button></header><main id="view"></main><nav><div id="nav"></div></nav></div>
+<div id="modal" onclick="if(event.target==this)closeM()"></div><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,"0");
+const money=v=>(v<0?"−":"+")+"$"+Math.abs(Math.round(v)).toLocaleString("en"),cls=v=>v>=0?"up":"dn";
+const T=()=>trades.filter(t=>!cur||t.acc==cur);
+function stats(ts){const w=ts.filter(t=>t.pl>0),gp=w.reduce((s,t)=>s+t.pl,0),gl=Math.abs(ts.filter(t=>t.pl<0).reduce((s,t)=>s+t.pl,0)),days={};ts.forEach(t=>days[t.d]=(days[t.d]||0)+t.pl);const dv=Object.values(days);
+ return{n:ts.length,net:ts.reduce((s,t)=>s+t.pl,0),wr:ts.length?w.length/ts.length*100:0,pf:gl?gp/gl:0,r:(x=>x.length?x.reduce((s,t)=>s+t.r,0)/x.length:0)(ts.filter(t=>t.r!=null)),best:dv.length?Math.max(...dv):0,worst:dv.length?Math.min(...dv):0,days}}
+const accName=id=>(accs.find(a=>a.id==id)||{}).name;
+function bar(l,v,m,good){const p=Math.max(0,Math.min(100,v/m*100));return`<div style="margin-top:8px"><div class="row" style="padding:0;border:0"><span class="k">${l}</span><span>$${Math.round(v).toLocaleString("en")} / $${m.toLocaleString("en")}</span></div><div class="bar"><i style="width:${p}%;background:var(--${good?"up":"dn"})"></i></div></div>`}
+function home(){const ts=T(),s=stats(ts),a=accs.find(x=>x.id==cur),start=a?a.bal:accs.reduce((x,y)=>x+y.bal,0),ds=Object.keys(s.days).sort();
+ let c=start;const pts=[start];ds.forEach(d=>{c+=s.days[d];pts.push(c)});
+ const mn=Math.min(...pts),mx=Math.max(...pts),rg=mx-mn||1,xy=pts.map((p,i)=>[10+i/(pts.length-1||1)*300,104-(p-mn)/rg*88]),ln=xy.map(p=>p.map(Math.round).join(",")).join(" ");
+ let prop="";if(a&&a.type=="Prop"){const dd=Math.max(0,Math.max(...pts)-c),td=Math.max(0,-(s.days[TODAY]||0));prop=`<div class="card"><h2>Prop rules</h2>${bar("Profit target",Math.max(0,c-start),a.target,1)}${bar("Max drawdown used",dd,a.dd,0)}${bar("Today’s loss limit used",td,a.dl,0)}</div>`}
+ return`<div class="card"><div class="k">Balance</div><div class="big">$${Math.round(c).toLocaleString("en")}</div><div class="${cls(s.net)}">${money(s.net)} all time</div>
+ <svg viewBox="0 0 320 116" width="100%" style="margin-top:8px" role="img" aria-label="Equity curve"><polygon points="${ln} 310,112 10,112" fill="var(--ac)" opacity=".13"/><polyline points="${ln}" fill="none" stroke="var(--ac)" stroke-width="2.2" stroke-linejoin="round"/></svg></div>
+ <div class="card"><div class="grid"><div><div class="k">Win rate</div><div class="v">${s.wr.toFixed(0)}%</div></div><div><div class="k">Profit factor</div><div class="v">${s.pf.toFixed(2)}</div></div><div><div class="k">Avg R</div><div class="v">${s.r.toFixed(2)}R</div></div><div><div class="k">Trades</div><div class="v">${s.n}</div></div><div><div class="k">Best day</div><div class="v up">${money(s.best)}</div></div><div><div class="k">Worst day</div><div class="v dn">${money(s.worst)}</div></div></div></div>${prop}`}
+function trow(t){return`<div class="row" style="cursor:pointer" onclick="det(${t.id})"><div><b>${t.pair}</b> ${t.dir} <span class="k">${t.d}${cur?"":" · "+accName(t.acc)}</span><div><span class="tag">${t.strat}</span><span class="tag">${t.emo}</span>${t.mis!="None"?`<span class="tag dn">${t.mis}</span>`:""}</div></div><div class="${cls(t.pl)}" style="text-align:right"><b>${money(t.pl)}</b><div class="k">${t.r==null?"":(t.r>0?"+":"")+t.r+"R"}</div></div></div>`}
+function cal(){const{y,m}=cm,s=stats(T()),off=(new Date(y,m,1).getDay()+6)%7,dim=new Date(y,m+1,0).getDate();let cells=Array(off).fill(0);for(let d=1;d<=dim;d++)cells.push(d);while(cells.length%7)cells.push(0);
+ let h="",mt=0;for(let r=0;r<cells.length/7;r++){let wt=0,wn=0;for(let c=0;c<7;c++){const d=cells[r*7+c];if(!d){h+="<div></div>";continue}const k=y+"-"+pad(m+1)+"-"+pad(d),v=s.days[k];if(v!==undefined){wt+=v;wn++;mt+=v}
+ h+=`<div class="cd ${v===undefined?"":v>=0?"w":"l"} ${sel==k?"sel":""}" onclick="sel='${k}';draw()"><b>${d}</b>${v===undefined?"":money(v)}</div>`}h+=`<div class="cd wk"><b>Wk ${r+1}</b>${wn?money(wt):"–"}</div>`}
+ const dt=T().filter(t=>t.d==sel);
+ return`<div class="card"><div class="row" style="border:0;padding-top:0"><button onclick="mv(-1)">‹</button><div style="text-align:center"><b>${new Date(y,m).toLocaleString("en",{month:"long",year:"numeric"})}</b><div class="${cls(mt)}">${money(mt)} this month</div></div><button onclick="mv(1)">›</button></div>
+ <div class="cal">${"MTWTFSS".split("").map(x=>`<div class="h">${x}</div>`).join("")}<div class="h">Week</div>${h}</div></div>
+ <div class="card"><h2>${sel}</h2>${dt.length?dt.map(trow).join(""):'<div class="note">No trades on this day.</div>'}</div>`}
+function mv(n){cm.m+=n;if(cm.m<0){cm.m=11;cm.y--}if(cm.m>11){cm.m=0;cm.y++}draw()}
+function trades_v(){const l=T().filter(t=>pf=="All"||t.pair==pf).sort((a,b)=>b.d.localeCompare(a.d)||b.id-a.id);
+ return`<div class="chips">${["All",...PAIRS].map(p=>`<button class="${pf==p?"on":""}" onclick="pf='${p}';draw()">${p}</button>`).join("")}</div><div class="card">${l.slice(0,40).map(trow).join("")||'<div class="note">No trades yet.</div>'}</div>`}
+function grp(t,key,skip){const g={};T().forEach(x=>{const k=x[key];if(k==skip)return;(g[k]=g[k]||{k,n:0,pl:0,w:0});g[k].n++;g[k].pl+=x.pl;if(x.pl>0)g[k].w++});const a=Object.values(g).sort((x,y)=>y.pl-x.pl),m=Math.max(...a.map(x=>Math.abs(x.pl)),1);
+ return`<div class="card"><h2>${t}</h2>${a.map(x=>`<div style="margin-top:8px"><div class="row" style="padding:0;border:0"><span>${x.k} <span class="k">${x.n} trades · ${(x.w/x.n*100).toFixed(0)}% win</span></span><b class="${cls(x.pl)}">${money(x.pl)}</b></div><div class="bar"><i style="width:${Math.abs(x.pl)/m*100}%;background:var(--${cls(x.pl)})"></i></div></div>`).join("")}</div>`}
+const stats_v=()=>grp("By strategy","strat")+grp("By pair","pair")+grp("By session","ses")+grp("By emotion","emo")+grp("By mistake","mis","None");
+function sel_(id,o,v){return`<select id="${id}">${o.map(x=>`<option${x==v?" selected":""}>${x}</option>`).join("")}</select>`}
+const V={home,cal,trades:trades_v,stats:stats_v,add,set},NAV=[["home","Home"],["cal","Calendar"],["add","+"],["stats","Analytics"],["trades","Trades"]];
+function go(t,k){if(!k)editId=null;tab=t;draw();scrollTo(0,0)}
+function draw(){$("#acc").innerHTML=`<option value="0">All accounts</option>`+accs.map(a=>`<option value="${a.id}"${a.id==cur?" selected":""}>${a.name} (${a.type})</option>`).join("");$("#acc").value=cur;
+ $("#view").innerHTML=V[tab]();$("#nav").innerHTML=NAV.map(([k,l])=>`<button class="${tab==k?"on":""}${k=="add"?" add":""}" onclick="go('${k}')" aria-label="${l=="+"?"Add trade":l}">${l}</button>`).join("")}
+let tt;function toast(m){const e=$("#toast");e.textContent=m;e.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>e.classList.remove("on"),1800)}
+const LS="tj1",SES=["Asian","London","New York"],DEF={pairs:["XAUUSD","NAS100","BTCUSD"],strat:["Breakout","Pullback","Reversal","News"],emo:["Calm","Confident","FOMO","Fear","Revenge"],mis:["None","Moved SL","Early exit","Oversized","Chased entry"]},HEAD=["date","pair","direction","entry","exit","stop_loss","take_profit","lots","profit","session","strategy","emotion","mistake","notes"];
+let D,sha=null,tok="",repo="",owner="",accs=[],trades=[],PAIRS=[],STR=[],EMO=[],MIS=[],cur=0,tab="home",pf="All",editId=null,armed="",pin="";
+const TODAY=(d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()))(new Date());
+let cm={y:+TODAY.slice(0,4),m:+TODAY.slice(5,7)-1},sel=TODAY;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),setStatus=m=>$("#st").textContent=m;
+const enc=new TextEncoder(),dec=new TextDecoder(),b64=b=>btoa(String.fromCharCode(...new Uint8Array(b))),ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function ckey(p,salt){const m=await crypto.subtle.importKey("raw",enc.encode(p),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},m,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function seal(p,o){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await ckey(p,salt),enc.encode(JSON.stringify(o)));localStorage.setItem(LS,JSON.stringify({s:b64(salt),i:b64(iv),c:b64(ct)}))}
+async function unseal(p){const o=JSON.parse(localStorage.getItem(LS));return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(o.i)},await ckey(p,ub(o.s)),ub(o.c))))}
+const api=(p,o={})=>fetch("https://api.github.com/repos/"+owner+"/"+repo+"/contents/"+p,{...o,headers:{Authorization:"Bearer "+tok,Accept:"application/vnd.github+json","Content-Type":"application/json",...(o.headers||{})}});
+const toB=s=>btoa(unescape(encodeURIComponent(s))),fromB=s=>decodeURIComponent(escape(atob(s.replace(/\n/g,""))));
+async function load(){const r=await api("data.json");if(r.status==404){D={v:1,accounts:[],trades:[]};sha=null}else{if(!r.ok)throw new Error("GitHub error "+r.status);const j=await r.json();sha=j.sha;D=JSON.parse(j.content?fromB(j.content):await(await api("data.json",{headers:{Accept:"application/vnd.github.raw+json"}})).text())}D.lists={...DEF,...(D.lists||{})}}
+async function persist(msg){setStatus("Saving…");for(let i=0;i<2;i++){const r=await api("data.json",{method:"PUT",body:JSON.stringify({message:msg||"Update journal",content:toB(JSON.stringify(D)),...(sha?{sha}:{})})});if(r.ok){sha=(await r.json()).content.sha;setStatus("Saved");return true}if(r.status==409||r.status==422){const g=await api("data.json");if(g.ok)sha=(await g.json()).sha;continue}setStatus("Not saved ("+r.status+")");return false}setStatus("Not saved");return false}
+function shrink(f){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1280/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);c.toBlob(b=>{const r=new FileReader();r.onload=()=>ok(r.result.split(",")[1]);r.readAsDataURL(b)},"image/jpeg",.78)};i.onerror=()=>no(new Error("Could not read image"));i.src=URL.createObjectURL(f)})}
+async function up(f){const p="shots/"+Date.now()+"-"+Math.random().toString(36).slice(2,6)+".jpg",r=await api(p,{method:"PUT",body:JSON.stringify({message:"Add screenshot",content:await shrink(f)})});if(!r.ok)throw new Error("Screenshot upload failed ("+r.status+")");return p}
+const cache={};async function shotUrl(p){if(!cache[p]){const r=await api(p,{headers:{Accept:"application/vnd.github.raw+json"}});cache[p]=URL.createObjectURL(await r.blob())}return cache[p]}
+const rr=t=>{if([t.entry,t.exit,t.sl].some(x=>x==null))return null;const k=t.dir=="Buy"?t.entry-t.sl:t.sl-t.entry;return k>0?+((t.dir=="Buy"?t.exit-t.entry:t.entry-t.exit)/k).toFixed(2):null};
+function twice(k,fn){if(armed!=k){armed=k;toast("Tap again to confirm");setTimeout(()=>armed="",3000);return}armed="";fn()}
+function dl(n,t,m){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:m||"text/csv"}));a.download=n;a.click()}
+function csv(t){const r=[];let row=[],f="",q=0;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=0}else f+=c}else if(c=='"')q=1;else if(c==","){row.push(f);f=""}else if(c=="\n"||c=="\r"){if(c=="\r"&&t[i+1]=="\n")i++;row.push(f);f="";if(row.some(x=>x!==""))r.push(row);row=[]}else f+=c}row.push(f);if(row.some(x=>x!==""))r.push(row);return r}
+const ni=(id,l,k,t)=>`<label>${l}<input id="${id}" type="number" step="any" inputmode="decimal" value="${t[k]??""}"></label>`;
+function add(){const t=editId?trades.find(x=>x.id==editId):{};
+ return`<div class="card f"><h2 class="w2">${editId?"Edit trade":"New trade"}</h2><label class="w2">Account<select id="fa">${accs.map(a=>`<option value="${a.id}"${(t.acc||cur)==a.id?" selected":""}>${a.name} (${a.type})</option>`).join("")}</select></label>
+ <label>Date<input id="fdt" type="date" value="${t.d||TODAY}"></label><label>Direction${sel_("fd",["Buy","Sell"],t.dir)}</label><label>Pair${sel_("fp",PAIRS,t.pair)}</label><label>Session${sel_("fs",SES,t.ses)}</label>
+ ${ni("fe","Entry","entry",t)}${ni("fx","Exit","exit",t)}${ni("fsl","Stop loss","sl",t)}${ni("ftp","Take profit","tp",t)}${ni("flot","Lot size","lots",t)}${ni("fl","Profit / loss ($)","pl",t)}
+ <label>Strategy${sel_("ft",["—",...STR],t.strat)}</label><label>Emotion${sel_("fo",["—",...EMO],t.emo)}</label><label class="w2">Mistake${sel_("fm",MIS,t.mis)}</label>
+ <label class="w2">Notes<textarea id="fn" placeholder="What did you see? What would you change?">${esc(t.notes||"")}</textarea></label>
+ <label class="w2">Screenshots${t.shots&&t.shots.length?` (${t.shots.length} saved, new ones are added)`:""}<input id="ff" type="file" accept="image/*" multiple></label>
+ <button id="sv" class="p w2" onclick="save()">${editId?"Save changes":"Save trade"}</button></div>`}
+async function save(){const g=i=>$("#"+i).value,n=i=>g(i)===""?null:+g(i);if(!accs.length)return toast("Create an account first");if(n("fl")===null)return toast("Enter the profit or loss");
+ const t=editId?trades.find(x=>x.id==editId):{id:Date.now(),shots:[]};
+ Object.assign(t,{acc:+g("fa"),d:g("fdt"),pair:g("fp"),dir:g("fd"),ses:g("fs"),entry:n("fe"),exit:n("fx"),sl:n("fsl"),tp:n("ftp"),lots:n("flot"),pl:n("fl"),strat:g("ft"),emo:g("fo"),mis:g("fm"),notes:g("fn")});t.r=rr(t);
+ $("#sv").disabled=true;toast("Saving…");try{for(const f of $("#ff").files)t.shots.push(await up(f))}catch(e){toast(e.message)}
+ if(!editId)trades.push(t);editId=null;const ok=await persist("Save trade");toast(ok?"Trade saved":"Saved here, but not synced to GitHub");go("trades")}
+function det(id){const t=trades.find(x=>x.id==id),f=(l,v)=>v==null||v===""?"":`<div class="row"><span class="k">${l}</span><span>${v}</span></div>`,m=$("#modal");
+ m.style.display="block";m.innerHTML=`<div class="card"><div class="row" style="border:0"><b>${t.pair} ${t.dir}</b><b class="${cls(t.pl)}">${money(t.pl)}</b></div>${f("Account",accName(t.acc))}${f("Date",t.d)}${f("Opened (UTC)",(t.ot||"").replace("T"," "))}${f("Closed (UTC)",(t.ct||"").replace("T"," "))}${f("Ticket",t.ticket)}${f("Session",t.ses)}${f("Entry",t.entry)}${f("Exit",t.exit)}${f("Stop loss",t.sl)}${f("Take profit",t.tp)}${f("Lots",t.lots)}${f("R multiple",t.r==null?"":t.r+"R")}${f("Strategy",t.strat)}${f("Emotion",t.emo)}${f("Mistake",t.mis)}${t.notes?`<p>${esc(t.notes)}</p>`:""}${(t.shots||[]).map(p=>`<img data-p="${p}" alt="Screenshot" style="width:100%;border-radius:9px;margin-top:8px;min-height:60px;background:var(--bg)">`).join("")}
+ <div class="f" style="margin-top:12px"><button onclick="edit(${id})">Edit</button><button class="dn" onclick="twice('d${id}',()=>del(${id}))">Delete</button><button class="w2" onclick="closeM()">Close</button></div></div>`;
+ m.querySelectorAll("img").forEach(async i=>{try{i.src=await shotUrl(i.dataset.p)}catch(e){}})}
+const closeM=()=>$("#modal").style.display="none",edit=id=>{closeM();editId=id;go("add",1)};
+async function del(id){trades.splice(trades.findIndex(x=>x.id==id),1);closeM();draw();toast(await persist("Delete trade")?"Deleted":"Deleted here, not synced")}
+function set(){return`<div class="card"><h2>Accounts</h2>${accs.map(a=>`<div class="row"><span><b>${esc(a.name)}</b> <span class="tag">${a.type}</span></span><span>$${a.bal.toLocaleString("en")}</span></div>`).join("")||'<div class="note">No accounts yet. Create your first one below.</div>'}</div>
+ <div class="card f"><h2 class="w2">Create account</h2><label class="w2">Name<input id="an" placeholder="e.g. Exness Live"></label>
+ <label>Type<select id="at" onchange="$('#pr').style.display=this.value=='Prop'?'contents':'none'"><option>Live</option><option>Prop</option></select></label><label>Starting balance<input id="ab" type="number" inputmode="decimal" value="1000"></label>
+ <div id="pr" style="display:none"><label>Profit target<input id="ag" type="number" value="8000"></label><label>Max drawdown<input id="ad" type="number" value="8000"></label><label>Daily loss limit<input id="al" type="number" value="4000"></label></div>
+ <button class="p w2" onclick="mk()">Create account</button></div>
+ <div class="card f"><h2 class="w2">Your lists (separate with commas)</h2>${[["pairs","Pairs"],["strat","Strategies"],["emo","Emotions"],["mis","Mistakes"]].map(([k,l])=>`<label class="w2">${l}<input id="l_${k}" value="${esc(D.lists[k].join(", "))}"></label>`).join("")}<button class="p w2" onclick="lists()">Save lists</button></div>
+ <div class="card"><h2>Import CSV</h2><label class="k">Import into account<select id="ia" style="width:100%;margin:4px 0 8px">${accs.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select></label><input type="file" accept=".csv" onchange="imp(this)" style="width:100%"><div class="row" style="margin-top:8px"><span class="note">Exness exports or the journal template</span><button onclick="dl('journal-template.csv',HEAD.join(',')+'\\n2026-11-04,XAUUSD,Buy,2650.5,2658,2645,2665,0.1,75,London,Breakout,Calm,None,example row\\n')">Download template</button></div></div>
+ <div class="card"><h2>Data and security</h2><div class="row" style="border:0"><span>Backup (JSON)</span><button onclick="dl('journal-backup.json',JSON.stringify(D,null,1),'application/json')">Export</button></div><div class="row"><span>Lock app</span><button onclick="location.reload()">Lock</button></div><div class="row"><span>Disconnect this device</span><button class="dn" onclick="twice('x',()=>{localStorage.removeItem(LS);location.reload()})">Disconnect</button></div><div class="note" style="margin-top:6px">Connected to ${esc(owner)}/${esc(repo)}</div></div>`}
+async function mk(){const n=$("#an").value.trim();if(!n)return toast("Enter an account name");const p=$("#at").value=="Prop",a={id:Date.now(),name:n,type:$("#at").value,bal:+$("#ab").value||0};if(p){a.target=+$("#ag").value;a.dd=+$("#ad").value;a.dl=+$("#al").value}accs.push(a);cur=a.id;await persist("Create account");toast("Account created");go("home")}
+function lists(){["pairs","strat","emo","mis"].forEach(k=>D.lists[k]=$("#l_"+k).value.split(",").map(x=>x.trim()).filter(Boolean));if(!D.lists.mis.includes("None"))D.lists.mis.unshift("None");PAIRS=D.lists.pairs;STR=D.lists.strat;EMO=D.lists.emo;MIS=D.lists.mis;persist("Update lists");toast("Lists saved");draw()}
+const SYM={USTEC:"NAS100"},sesOf=h=>h<7||h>=21?"Asian":h<12?"London":"New York",tkey=t=>t.ticket?[t.acc,t.ticket,t.ct].join("|"):[t.acc,t.d,t.pair,t.entry,t.exit,t.pl].join("|");
+async function imp(inp){const f=inp.files[0],acc=+$("#ia").value;if(!f||!acc)return toast("Create an account first");const rows=csv((await f.text()).replace(/^\uFEFF/,"")),h=rows.shift().map(x=>x.trim().toLowerCase()),g=(r,k)=>(r[h.indexOf(k)]||"").trim(),nm=x=>x===""||isNaN(+x)?null:+x,ex=h.includes("ticket"),seen=new Set(trades.map(tkey));let ok=0,skip=0;
+ rows.forEach(r=>{let t;if(ex){const sy=g(r,"symbol").replace(/([A-Z0-9])[a-z]$/,"$1"),ot=g(r,"opening_time_utc"),ct=g(r,"closing_time_utc");t={acc,ticket:g(r,"ticket"),ot,ct,d:ct.slice(0,10),pair:SYM[sy]||sy,dir:/sell/i.test(g(r,"type"))?"Sell":"Buy",entry:nm(g(r,"opening_price")),exit:nm(g(r,"closing_price")),sl:nm(g(r,"stop_loss")),tp:nm(g(r,"take_profit")),lots:nm(g(r,"lots")),pl:+((nm(g(r,"profit"))||0)+(nm(g(r,"commission"))||0)+(nm(g(r,"swap"))||0)).toFixed(2),r:null,ses:sesOf(+ot.slice(11,13)),strat:"—",emo:"—",mis:"None",notes:g(r,"close_reason")?"Closed by: "+g(r,"close_reason"):"",shots:[]}}
+ else t={acc,d:g(r,"date").slice(0,10),pair:g(r,"pair").toUpperCase(),dir:/sell/i.test(g(r,"direction"))?"Sell":"Buy",entry:nm(g(r,"entry")),exit:nm(g(r,"exit")),sl:nm(g(r,"stop_loss")),tp:nm(g(r,"take_profit")),lots:nm(g(r,"lots")),pl:nm(g(r,"profit")),ses:g(r,"session")||"—",strat:g(r,"strategy")||"—",emo:g(r,"emotion")||"—",mis:g(r,"mistake")||"None",notes:g(r,"notes"),shots:[]};
+ const k=tkey(t);if(!/^\d{4}-\d\d-\d\d$/.test(t.d)||t.pl===null||seen.has(k)){skip++;return}seen.add(k);t.id=Date.now()+ok+skip;if(!ex)t.r=rr(t);if(!PAIRS.includes(t.pair))PAIRS.push(t.pair);trades.push(t);ok++});
+ await persist("Import CSV");inp.value="";toast("Imported "+ok+", skipped "+skip);draw()}
+function startApp(){accs=D.accounts;trades=D.trades;const L=D.lists;PAIRS=L.pairs;STR=L.strat;EMO=L.emo;MIS=L.mis;$("#lock").style.display="none";$("#app").hidden=false;tab=accs.length?"home":"set";draw();if(!accs.length)toast("Create your first account")}
+async function conn(e){e.preventDefault();owner=$("#so").value.trim();repo=$("#sr").value.trim();tok=$("#stk").value.trim();const p=$("#sp").value,m=$("#se");if(!/^\d{6}$/.test(p)){m.textContent="The PIN must be 6 digits";return false}
+ m.textContent="Connecting…";try{const r=await fetch("https://api.github.com/repos/"+owner+"/"+repo,{headers:{Authorization:"Bearer "+tok}});if(!r.ok)throw new Error(r.status==404?"Repo not found. Check the username, repo name and token access.":"GitHub replied "+r.status+". Check the token.");if((await r.json()).private===false)throw new Error("That repo is public. Use a private repo for your data.");
+ await load();if(!sha&&!(await persist("Create journal")))throw new Error("Could not write to the repo. The token needs Contents: Read and write.");await seal(p,{owner,repo,tok});startApp()}catch(x){m.textContent=x.message}return false}
+function key(k){pin=k=="⌫"?pin.slice(0,-1):(pin+k).slice(0,6);dots();if(pin.length==6)unlock()}
+const dots=()=>document.querySelectorAll("#dots i").forEach((d,i)=>d.className=i<pin.length?"f1":"");
+async function unlock(){const p=pin;pin="";$("#pm").textContent="Checking…";try{const c=await unseal(p);owner=c.owner;repo=c.repo;tok=c.tok;await load();startApp()}catch(e){dots();$("#pm").textContent=e.name=="OperationError"?"Wrong PIN":"Could not load: "+e.message}}
+$("#pad").innerHTML=[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map(k=>`<button ${k===""?"disabled style='visibility:hidden'":""} onclick="key('${k}')">${k}</button>`).join("");
+try{Telegram.WebApp.ready();Telegram.WebApp.expand()}catch(e){}
+if(localStorage.getItem(LS))$("#pinbox").style.display="flex";else $("#setup").style.display="block";
+</script></body></html>
